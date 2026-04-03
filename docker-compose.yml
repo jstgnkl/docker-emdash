@@ -1,6 +1,9 @@
+name: emdash
+
 services:
   emdash:
-    image: zenety/emdash:latest
+    image: jstgnkl/emdash:latest
+    container_name: emdash
     ports:
       - "4321:4321"
     volumes:
