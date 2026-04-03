@@ -40,6 +40,9 @@ COPY --from=build /app /app
 WORKDIR /app/templates/blog
 RUN mkdir -p data uploads
 
+# Ensure transitive deps required at runtime via CJS are resolvable
+RUN pnpm add kysely
+
 ENV HOST=0.0.0.0
 ENV PORT=4321
 EXPOSE 4321
