@@ -1,0 +1,14 @@
+services:
+  emdash:
+    image: zenety/emdash:latest
+    ports:
+      - "4321:4321"
+    volumes:
+      # Persist SQLite database and uploaded media across restarts
+      - emdash-data:/app/templates/blog/data
+      - emdash-uploads:/app/templates/blog/uploads
+    restart: unless-stopped
+
+volumes:
+  emdash-data:
+  emdash-uploads:
