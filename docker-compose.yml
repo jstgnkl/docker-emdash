@@ -2,14 +2,21 @@ name: emdash
 
 services:
   emdash:
+    build:
+      context: ../emdash
+      dockerfile: ../docker-emdash/Dockerfile
+      args:
+        # Set to your public HTTPS origin for passkeys behind a reverse proxy
+        # e.g. https://emdash.example.com
+        PASSKEY_PUBLIC_ORIGIN: ${PASSKEY_PUBLIC_ORIGIN:-}
     image: jstgnkl/emdash:latest
     container_name: emdash
     ports:
       - "4321:4321"
     volumes:
       # Persist SQLite database and uploaded media across restarts
-      - emdash-data:/app/templates/blog/data
-      - emdash-uploads:/app/templates/blog/uploads
+      - emdash-data:/app/data
+      - emdash-uploads:/app/uploads
     restart: unless-stopped
 
 volumes:

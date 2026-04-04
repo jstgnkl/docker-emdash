@@ -19,9 +19,14 @@ RUN pnpm install --frozen-lockfile
 # ---- Build ----
 FROM deps AS build
 
+ARG PASSKEY_PUBLIC_ORIGIN
 COPY . .
 RUN sed -i '/slidev/d' pnpm-workspace.yaml
 RUN sed -i 's|file:./data.db|file:./data/data.db|' templates/blog/astro.config.mjs
+# Inject passkeyPublicOrigin into emdash config if build arg is set
+RUN if [ -n "$PASSKEY_PUBLIC_ORIGIN" ]; then \
+      sed -i "s|emdash({|emdash({\n\t\t\t\tpasskeyPublicOrigin: \"$PASSKEY_PUBLIC_ORIGIN\",|" templates/blog/astro.config.mjs; \
+    fi
 
 RUN pnpm build && pnpm --filter @emdash-cms/template-blog build
 
