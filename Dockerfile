@@ -47,9 +47,9 @@ COPY <<'ENTRYPOINT' /app/entrypoint.sh
 #!/bin/sh
 set -e
 if [ -n "$PUBLIC_ORIGIN" ]; then
-  HOST=$(echo "$PUBLIC_ORIGIN" | sed 's|.*://||' | sed 's|/.*||' | sed 's|:.*||')
-  echo "Configuring for public origin: $PUBLIC_ORIGIN (host: $HOST)"
-  DOMAINS="[{\"hostname\":\"$HOST\",\"protocol\":\"https\"},{\"hostname\":\"$HOST\",\"protocol\":\"http\"}]"
+  _HOST=$(echo "$PUBLIC_ORIGIN" | sed 's|.*://||' | sed 's|/.*||' | sed 's|:.*||')
+  echo "Configuring for public origin: $PUBLIC_ORIGIN (host: $_HOST)"
+  DOMAINS="[{\"hostname\":\"$_HOST\",\"protocol\":\"https\"},{\"hostname\":\"$_HOST\",\"protocol\":\"http\"}]"
   # Patch passkeyPublicOrigin in emdash virtual config
   CONFIG_FILE=$(grep -rl 'const virtualConfig' /app/dist/server/chunks/ | head -1)
   if [ -n "$CONFIG_FILE" ]; then
