@@ -19,14 +19,9 @@ RUN pnpm install --frozen-lockfile
 # ---- Build ----
 FROM deps AS build
 
-ARG PASSKEY_PUBLIC_ORIGIN
 COPY . .
 RUN sed -i '/slidev/d' pnpm-workspace.yaml
 RUN sed -i 's|file:./data.db|file:./data/data.db|' templates/blog/astro.config.mjs
-# Inject passkeyPublicOrigin into emdash config if build arg is set
-RUN if [ -n "$PASSKEY_PUBLIC_ORIGIN" ]; then \
-      sed -i "s|emdash({|emdash({\n\t\t\t\tpasskeyPublicOrigin: \"$PASSKEY_PUBLIC_ORIGIN\",|" templates/blog/astro.config.mjs; \
-    fi
 
 RUN pnpm build && pnpm --filter @emdash-cms/template-blog build
 
@@ -47,8 +42,36 @@ COPY --from=build /deploy .
 RUN mkdir -p data uploads \
     && ln -s /app/node_modules/.pnpm/node_modules/kysely /app/node_modules/kysely
 
+# Entrypoint patches built JS at startup to trust forwarded headers for PUBLIC_ORIGIN
+COPY <<'ENTRYPOINT' /app/entrypoint.sh
+#!/bin/sh
+set -e
+if [ -n "$PUBLIC_ORIGIN" ]; then
+  HOST=$(echo "$PUBLIC_ORIGIN" | sed 's|.*://||' | sed 's|/.*||' | sed 's|:.*||')
+  echo "Configuring for public origin: $PUBLIC_ORIGIN (host: $HOST)"
+  DOMAINS="[{\"hostname\":\"$HOST\",\"protocol\":\"https\"},{\"hostname\":\"$HOST\",\"protocol\":\"http\"}]"
+  # Patch passkeyPublicOrigin in emdash virtual config
+  CONFIG_FILE=$(grep -rl 'const virtualConfig' /app/dist/server/chunks/ | head -1)
+  if [ -n "$CONFIG_FILE" ]; then
+    if grep -q '"passkeyPublicOrigin"' "$CONFIG_FILE"; then
+      sed -i "s|\"passkeyPublicOrigin\":\"[^\"]*\"|\"passkeyPublicOrigin\":\"$PUBLIC_ORIGIN\"|" "$CONFIG_FILE"
+    else
+      sed -i "s|\"}}};|\"}},\"passkeyPublicOrigin\":\"$PUBLIC_ORIGIN\"};|" "$CONFIG_FILE"
+    fi
+  fi
+  # Patch allowedDomains in Astro manifest
+  MANIFEST_FILE=$(grep -rl 'deserializeManifest' /app/dist/server/chunks/ | head -1)
+  if [ -n "$MANIFEST_FILE" ]; then
+    sed -i "s|\"allowedDomains\":\[[^]]*\]|\"allowedDomains\":$DOMAINS|g" "$MANIFEST_FILE"
+  fi
+fi
+exec "$@"
+ENTRYPOINT
+RUN chmod +x /app/entrypoint.sh
+
 ENV HOST=0.0.0.0
 ENV PORT=4321
 EXPOSE 4321
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "./dist/server/entry.mjs"]
