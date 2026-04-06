@@ -1,0 +1,42 @@
+name: Build and Push Docker Image
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 3:00 AM UTC daily (1 hour after fork sync)
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout docker-emdash
+        uses: actions/checkout@v4
+
+      - name: Checkout emdash source
+        uses: actions/checkout@v4
+        with:
+          repository: jstgnkl/emdash
+          path: emdash-source
+
+      - name: Get emdash version
+        id: version
+        run: echo "version=$(jq -r .version emdash-source/package.json)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./emdash-source
+          file: ./Dockerfile
+          push: true
+          tags: |
+            jstgnkl/emdash:latest
+            jstgnkl/emdash:${{ steps.version.outputs.version }}

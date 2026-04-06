@@ -2,7 +2,7 @@ name: emdash
 
 services:
   emdash:
-    image: jstgnkl/emdash:0.2.0
+    image: jstgnkl/emdash:latest
     container_name: emdash
     environment:
       # Set to your public HTTPS origin when behind a reverse proxy
