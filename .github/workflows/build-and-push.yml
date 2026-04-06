@@ -18,6 +18,9 @@ jobs:
           repository: jstgnkl/emdash
           path: emdash-source
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -32,5 +35,6 @@ jobs:
         with:
           context: ./emdash-source
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: jstgnkl/emdash:latest
