@@ -1,6 +1,15 @@
 # docker-emdash
 
+[![Build and Push Docker Image](https://github.com/jstgnkl/docker-emdash/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/jstgnkl/docker-emdash/actions/workflows/build-and-push.yml)
+
 Docker image for [EmDash](https://github.com/emdash-cms/emdash), the Astro-based CMS. Runs the blog template with Node.js and SQLite -- no Cloudflare account required.
+
+## Image tags
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Nightly build from the latest upstream source |
+| `x.y.z` (e.g. `1.0.0`) | Verified working release, manually checked |
 
 ## Quick start
 
@@ -17,7 +26,7 @@ name: emdash
 
 services:
   emdash:
-    image: jstgnkl/emdash:0.2.0
+    image: jstgnkl/emdash:latest
     container_name: emdash
     environment:
       - PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-}
