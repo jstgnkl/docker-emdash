@@ -4,9 +4,6 @@ services:
   emdash:
     image: jstgnkl/emdash:latest
     container_name: emdash
-    environment:
-      # Set to your public HTTPS origin when behind a reverse proxy
-      - PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-}
     ports:
       - "4321:4321"
     volumes:
