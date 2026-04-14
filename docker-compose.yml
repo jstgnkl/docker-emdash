@@ -6,7 +6,7 @@ services:
     container_name: emdash
     environment:
       # Set to your public HTTPS origin when behind a reverse proxy
-      - PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-}
+      - EMDASH_SITE_URL=${EMDASH_SITE_URL:-}
     ports:
       - "4321:4321"
     volumes:

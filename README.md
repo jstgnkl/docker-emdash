@@ -4,6 +4,8 @@
 
 Docker image for [EmDash](https://github.com/emdash-cms/emdash), the Astro-based CMS. Runs the blog template with Node.js and SQLite -- no Cloudflare account required.
 
+> **Breaking change in `0.5`:** the `PUBLIC_ORIGIN` environment variable has been replaced by `EMDASH_SITE_URL` (upstream EmDash's name for the same value). If you were using `PUBLIC_ORIGIN` on an earlier tag, rename it in your compose or `docker run` command before upgrading.
+
 ## Image tags
 
 | Tag | Description |
@@ -29,7 +31,7 @@ services:
     image: jstgnkl/emdash:latest
     container_name: emdash
     environment:
-      - PUBLIC_ORIGIN=${PUBLIC_ORIGIN:-}
+      - EMDASH_SITE_URL=${EMDASH_SITE_URL:-}
     ports:
       - "4321:4321"
     volumes:
@@ -51,30 +53,27 @@ docker compose down -v   # stop and delete all data
 
 ## Reverse proxy setup
 
-When running behind a TLS-terminating reverse proxy (Traefik, Caddy, nginx, etc.), set the `PUBLIC_ORIGIN` environment variable to your public URL. The entrypoint exports it to EmDash as `EMDASH_SITE_URL`, which drives WebAuthn passkey origin matching, CSRF, OAuth redirects, and other origin-dependent features at runtime -- no rebuild needed.
+When running behind a TLS-terminating reverse proxy (Traefik, Caddy, nginx, etc.), set the `EMDASH_SITE_URL` environment variable to your public URL. EmDash reads it at runtime to drive WebAuthn passkey origin matching, CSRF, OAuth redirects, and other origin-dependent features -- no rebuild needed.
 
 ```bash
-docker run -d -p 4321:4321 -e PUBLIC_ORIGIN=https://emdash.example.com jstgnkl/emdash:latest
+docker run -d -p 4321:4321 -e EMDASH_SITE_URL=https://emdash.example.com jstgnkl/emdash:latest
 ```
 
 Or in Docker Compose:
 
 ```bash
-PUBLIC_ORIGIN=https://emdash.example.com docker compose up -d
+EMDASH_SITE_URL=https://emdash.example.com docker compose up -d
 ```
-
-You can also set `EMDASH_SITE_URL` directly if you prefer EmDash's upstream name.
 
 Forwarding `X-Forwarded-Proto: https` and `X-Forwarded-Host: <your hostname>` from the reverse proxy is recommended for general correctness (logging, third-party middleware) but is not required for passkeys to work -- origin resolution comes from `EMDASH_SITE_URL`, not the forwarded headers.
 
-Without `PUBLIC_ORIGIN` (or `EMDASH_SITE_URL`), passkey registration/login will fail with origin mismatch errors because the container only sees the internal HTTP origin.
+Without `EMDASH_SITE_URL`, passkey registration/login will fail with origin mismatch errors because the container only sees the internal HTTP origin.
 
 ## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PUBLIC_ORIGIN` | _(unset)_ | Public HTTPS origin for reverse proxy setups (e.g. `https://emdash.example.com`). Exported as `EMDASH_SITE_URL` by the entrypoint. |
-| `EMDASH_SITE_URL` | _(unset)_ | Upstream EmDash name for the same value; takes precedence if both are set. |
+| `EMDASH_SITE_URL` | _(unset)_ | Public HTTPS origin for reverse proxy setups (e.g. `https://emdash.example.com`) |
 | `HOST` | `0.0.0.0` | Address to bind |
 | `PORT` | `4321` | Port to listen on |
 

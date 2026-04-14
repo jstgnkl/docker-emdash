@@ -42,24 +42,8 @@ COPY --from=build /deploy .
 RUN mkdir -p data uploads \
     && ln -s /app/node_modules/.pnpm/node_modules/kysely /app/node_modules/kysely
 
-# EmDash resolves the public origin at runtime via EMDASH_SITE_URL.
-# Map the existing PUBLIC_ORIGIN input to it so users don't need to rename.
-COPY <<'ENTRYPOINT' /app/entrypoint.sh
-#!/bin/sh
-set -e
-if [ -n "$PUBLIC_ORIGIN" ] && [ -z "$EMDASH_SITE_URL" ]; then
-  export EMDASH_SITE_URL="$PUBLIC_ORIGIN"
-fi
-if [ -n "$EMDASH_SITE_URL" ]; then
-  echo "EmDash public origin: $EMDASH_SITE_URL"
-fi
-exec "$@"
-ENTRYPOINT
-RUN chmod +x /app/entrypoint.sh
-
 ENV HOST=0.0.0.0
 ENV PORT=4321
 EXPOSE 4321
 
-ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "./dist/server/entry.mjs"]
