@@ -51,7 +51,7 @@ docker compose down -v   # stop and delete all data
 
 ## Reverse proxy setup
 
-When running behind a TLS-terminating reverse proxy (Traefik, Caddy, nginx, etc.), set the `PUBLIC_ORIGIN` environment variable to your public URL. This configures both Astro's forwarded header trust and WebAuthn passkey origin matching at container startup -- no rebuild needed.
+When running behind a TLS-terminating reverse proxy (Traefik, Caddy, nginx, etc.), set the `PUBLIC_ORIGIN` environment variable to your public URL. The entrypoint exports it to EmDash as `EMDASH_SITE_URL`, which drives WebAuthn passkey origin matching, CSRF, OAuth redirects, and other origin-dependent features at runtime -- no rebuild needed.
 
 ```bash
 docker run -d -p 4321:4321 -e PUBLIC_ORIGIN=https://emdash.example.com jstgnkl/emdash:latest
@@ -63,20 +63,18 @@ Or in Docker Compose:
 PUBLIC_ORIGIN=https://emdash.example.com docker compose up -d
 ```
 
-Your reverse proxy must forward these headers:
+You can also set `EMDASH_SITE_URL` directly if you prefer EmDash's upstream name.
 
-| Header | Value |
-|--------|-------|
-| `X-Forwarded-Proto` | `https` |
-| `X-Forwarded-Host` | your public hostname |
+Forwarding `X-Forwarded-Proto: https` and `X-Forwarded-Host: <your hostname>` from the reverse proxy is recommended for general correctness (logging, third-party middleware) but is not required for passkeys to work -- origin resolution comes from `EMDASH_SITE_URL`, not the forwarded headers.
 
-Without `PUBLIC_ORIGIN`, passkey registration/login will fail with origin mismatch errors and Astro may redirect to internal URLs (e.g. `http://localhost:4321`).
+Without `PUBLIC_ORIGIN` (or `EMDASH_SITE_URL`), passkey registration/login will fail with origin mismatch errors because the container only sees the internal HTTP origin.
 
 ## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PUBLIC_ORIGIN` | _(unset)_ | Public HTTPS origin for reverse proxy setups (e.g. `https://emdash.example.com`) |
+| `PUBLIC_ORIGIN` | _(unset)_ | Public HTTPS origin for reverse proxy setups (e.g. `https://emdash.example.com`). Exported as `EMDASH_SITE_URL` by the entrypoint. |
+| `EMDASH_SITE_URL` | _(unset)_ | Upstream EmDash name for the same value; takes precedence if both are set. |
 | `HOST` | `0.0.0.0` | Address to bind |
 | `PORT` | `4321` | Port to listen on |
 
