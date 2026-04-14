@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   schedule:
-    - cron: '0 3 * * *' # 3:00 AM UTC daily (1 hour after fork sync)
+    - cron: '0 3 * * *' # 3:00 AM UTC daily
   workflow_dispatch:
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout emdash source
         uses: actions/checkout@v4
         with:
-          repository: jstgnkl/emdash
+          repository: emdash-cms/emdash
           path: emdash-source
 
       - name: Set up QEMU
